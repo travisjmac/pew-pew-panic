@@ -190,6 +190,89 @@
     canvas.style.cssText = "display:block;width:100%;height:100%;";
     wrap.appendChild(canvas);
     wrap.appendChild(live);
+    var creditsStyle = document.createElement("style");
+    creditsStyle.textContent = [
+      ".ppp-credits-btn{position:absolute;z-index:6;left:12px;bottom:12px;font:700 14px/1 system-ui,Segoe UI,sans-serif;color:#fff6ea;background:rgba(8,6,20,.92);border:2px solid #ffd23a;border-radius:999px;padding:8px 14px;cursor:pointer;touch-action:manipulation;}",
+      ".ppp-credits-btn:hover{border-color:#fff6c2;}",
+      ".ppp-credits-btn:focus-visible,.ppp-credits-close:focus-visible{outline:2px solid #fff6ea;outline-offset:2px;}",
+      ".ppp-credits{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(4,6,12,.78);}",
+      ".ppp-credits[hidden]{display:none !important;}",
+      ".ppp-credits-card{width:min(28rem,100%);max-height:min(84vh,560px);overflow:auto;background:#f7f9ff;color:#1c1917;border:4px solid #7ea2e8;border-radius:18px;padding:16px 18px 18px;box-shadow:0 14px 0 rgba(0,0,0,.28);text-align:center;user-select:text;}",
+      ".ppp-credits-card .ppp-credits-name{margin:0 0 8px;font:700 1.15rem/1.3 Georgia,'Times New Roman',serif;color:#142033;}",
+      ".ppp-credits-card p{margin:0 0 8px;font:600 15px/1.45 'Segoe UI',system-ui,sans-serif;color:#1c1917;}",
+      ".ppp-credits-card a{color:#1d4ed8;}",
+      ".ppp-credits-close{margin-top:6px;font:700 14px/1 'Segoe UI',system-ui,sans-serif;color:#fff8ea;background:#146b45;border:2px solid #e0b56a;border-radius:999px;padding:7px 14px;cursor:pointer;}"
+    ].join("");
+    var creditsBtn = document.createElement("button");
+    creditsBtn.type = "button";
+    creditsBtn.className = "ppp-credits-btn";
+    creditsBtn.textContent = "Credits";
+    creditsBtn.setAttribute("data-credits", "");
+    creditsBtn.setAttribute("aria-haspopup", "dialog");
+    creditsBtn.setAttribute("aria-expanded", "false");
+    var creditsLayer = document.createElement("div");
+    creditsLayer.className = "ppp-credits";
+    creditsLayer.hidden = true;
+    creditsLayer.setAttribute("data-credits", "");
+    var creditsCard = document.createElement("div");
+    creditsCard.className = "ppp-credits-card";
+    creditsCard.setAttribute("role", "dialog");
+    creditsCard.setAttribute("aria-modal", "true");
+    creditsCard.setAttribute("aria-label", "Credits");
+    var creditsName = document.createElement("p");
+    creditsName.className = "ppp-credits-name";
+    creditsName.textContent = "Travis MacDonald";
+    var creditsClose = document.createElement("button");
+    creditsClose.type = "button";
+    creditsClose.className = "ppp-credits-close";
+    creditsClose.textContent = "Close";
+    function creditsLine(href, label) {
+      var p = document.createElement("p");
+      var a = document.createElement("a");
+      a.href = href;
+      a.textContent = label;
+      p.appendChild(a);
+      return p;
+    }
+    var creditsHope = document.createElement("p");
+    creditsHope.textContent = "Hope you like these. They were fun to make.";
+    var creditsUrge = document.createElement("p");
+    creditsUrge.textContent = "Use that urge to create. Building something you care about lasts longer than tearing something down. Enjoy these, then go make your own.";
+    creditsCard.appendChild(creditsName);
+    creditsCard.appendChild(creditsLine("https://travisjmac.com", "https://travisjmac.com"));
+    creditsCard.appendChild(creditsLine("mailto:travis@travisjmac.com", "travis@travisjmac.com"));
+    creditsCard.appendChild(creditsHope);
+    creditsCard.appendChild(creditsUrge);
+    creditsCard.appendChild(creditsClose);
+    creditsLayer.appendChild(creditsCard);
+    wrap.appendChild(creditsStyle);
+    wrap.appendChild(creditsBtn);
+    wrap.appendChild(creditsLayer);
+    var creditsOpen = false;
+    function openCredits() {
+      creditsOpen = true;
+      creditsLayer.hidden = false;
+      creditsBtn.setAttribute("aria-expanded", "true");
+      creditsClose.focus();
+    }
+    function closeCredits() {
+      if (!creditsOpen) return;
+      creditsOpen = false;
+      creditsLayer.hidden = true;
+      creditsBtn.setAttribute("aria-expanded", "false");
+      creditsBtn.focus({ preventScroll: true });
+    }
+    creditsBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      openCredits();
+    });
+    creditsClose.addEventListener("click", function (e) {
+      e.stopPropagation();
+      closeCredits();
+    });
+    creditsLayer.addEventListener("click", function (e) {
+      if (e.target === creditsLayer) closeCredits();
+    });
     el.replaceChildren(wrap);
 
     var ctx = canvas.getContext("2d");
@@ -1348,7 +1431,19 @@
     }
 
     function onKeyDown(e) {
-      if (dead || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (dead) return;
+      var inCreditsUi = !!(e.target && e.target.closest && e.target.closest("[data-credits]"));
+      if (creditsOpen) {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          closeCredits();
+        } else if (!inCreditsUi) {
+          e.preventDefault();
+        }
+        return;
+      }
+      if (inCreditsUi && e.key !== "Escape") return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
       var left = isLeft(e);
       var right = isRight(e);
       var space = e.code === "Space" || e.key === " ";
